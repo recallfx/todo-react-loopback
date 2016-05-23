@@ -1,0 +1,57 @@
+head
+  //- Behavioral Meta Data
+  meta(charset='utf-8')
+  meta(name='x-csrf-token', content=_csrf)
+  meta(http-equiv='X-UA-Compatible', content='IE=edge')
+  meta(name='viewport', content='width=device-width, initial-scale=1.0')
+
+  //- SEO Meta Data
+  title Todo list app
+  meta(name='author', content='Marius Bieliauskas')
+  meta(name='description', content='Todo list frontend application based on React')
+  meta(name='keywords', content='')
+
+  //- Styles
+  link(rel='stylesheet', href='/css/style.css')
+  style.
+    #main {
+      margin-top: 10em;
+    }
+
+    @media (min-width: 768px) {
+      #main {
+        margin-top: 4em;
+      }
+    }
+
+    footer {
+      margin-top: 4em;
+    }
+
+    .navbar-right {
+      margin-right:1em;
+    }
+
+    /* Hover button */
+    .list-group-hover .list-group-item .hover-btn {
+      display: none;
+    }
+
+    .list-group-hover .list-group-item:hover .hover-btn {
+      display: block;
+      right: 10px;
+      position: absolute;
+    }
+
+    /* Hover list-group-item */
+    .list-group-hover .list-group-item:hover,
+    .list-group-hover .list-group-item:focus {
+      color: #ebebeb;
+      background-color: #485563;
+    }
+
+    /* typeahead input */
+    .typeahead.form-control[readonly] {
+      background-color: inherit;
+      opacity: 1;
+    }

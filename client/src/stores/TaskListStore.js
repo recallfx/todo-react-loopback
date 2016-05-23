@@ -1,0 +1,151 @@
+import { EventEmitter} from 'events';
+import { find, findIndex, assign } from 'lodash';
+import config from '../Config';
+import dispatcher from '../Dispatcher';
+import Constants from '../Constants';
+import { createRemote } from '../actions/TaskListActions';
+
+// private functions
+const trySavingLocalStorage = function (taskList) {
+  // try saving to local storage only for users who has not logged in
+  // and only in browsers with local storage support
+  if (config.isBrowser && config.hasLocalStorage && !config.user) {
+    if (taskList) {
+      // save to local store
+      localStorage.setItem(Constants.Defaults.TASK_LIST_KEY, JSON.stringify(taskList));
+    } else {
+      // remove key from local storage
+      localStorage.removeItem(Constants.Defaults.TASK_LIST_KEY);
+    }
+  }
+};
+
+const tryLoadingLocalStorage = function (data) {
+  let result = data ? data : [];
+
+  if (config.isBrowser && config.hasLocalStorage) {
+    const localDataString = localStorage.getItem(Constants.Defaults.TASK_LIST_KEY);
+
+    // check if local storage has any saved tasks
+    if (localDataString && localDataString !== '') {
+      let localData = JSON.parse(localDataString);
+
+      localData = localData.filter((localTask) => {
+        return localTask && localTask.title;
+      });
+
+      // add them to already received data
+      result = data.concat(localData);
+
+      // persist on server if user connected
+      if (config.user) {
+        localData.forEach((localTask) => {
+          // remove temporary id
+          delete localTask.id;
+
+          createRemote(localTask, () => {
+            // remove local data if persist action was a success
+            localStorage.removeItem(Constants.Defaults.TASK_LIST_KEY);
+          });
+        });
+      }
+    }
+  }
+
+  return result;
+};
+
+/*
+ * TaskListStore - STORE part of Flux pattern
+ * */
+class TaskListStore extends EventEmitter {
+  constructor() {
+    super();
+
+    this.taskList = null;
+  }
+
+  ensureTaskList() {
+    // if task list is not initialised, try adding config data and local storage
+    if (this.taskList === null) {
+      this.taskList = tryLoadingLocalStorage(config.data);
+    }
+  }
+
+  create(task) {
+    this.ensureTaskList();
+
+    this.taskList.push(task);
+
+    trySavingLocalStorage(this.taskList);
+
+    this.emit('change');
+  }
+
+  updateById(id, updatedTask) {
+    this.ensureTaskList();
+
+    let task = find(this.taskList, (task) => task.id === id);
+
+    assign(task, updatedTask);
+
+    trySavingLocalStorage(this.taskList);
+
+    this.emit('change');
+  }
+
+  deleteById(id) {
+    this.ensureTaskList();
+
+    const index = findIndex(this.taskList, (task) => task.id === id);
+
+    if (index > -1) {
+      this.taskList.splice(index, 1);
+
+      trySavingLocalStorage(this.taskList);
+
+      this.emit('change');
+    }
+  }
+
+  setAll(data) {
+    this.taskList = data;
+
+    trySavingLocalStorage(this.taskList);
+
+    this.emit('change');
+  }
+
+  getAll() {
+    this.ensureTaskList();
+
+    return this.taskList.sort((a, b) => b.order.localeCompare(a.order));
+  }
+
+  /*
+   * Handle dispatcher actions
+   * */
+  handleActions(action) {
+    switch (action.type) {
+      case Constants.Actions.TaskListStore.CREATE:
+        this.create(action.task);
+        break;
+      case Constants.Actions.TaskListStore.UPDATE:
+        this.updateById(action.id, action.task);
+        break;
+      case Constants.Actions.TaskListStore.DELETE:
+        this.deleteById(action.id);
+        break;
+
+      case Constants.Actions.Ajax.FETCH_END:
+        this.setAll(action.data);
+        break;
+    }
+  }
+}
+
+const taskListStore = new TaskListStore();
+
+dispatcher.register(taskListStore.handleActions.bind(taskListStore));
+
+export default taskListStore;

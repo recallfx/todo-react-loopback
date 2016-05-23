@@ -1,0 +1,13 @@
+extends ../layouts/layout
+
+block content
+  #container
+    | !{react}
+  include ../partials/footer
+
+block scripts
+  //- Init config
+  script.
+    window.serverContext = !{JSON.stringify(serverContext).replace(/<\//g, "<\\/")}
+  //- Load Scripts
+  script(src='/js/app.client.min.js')

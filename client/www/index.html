@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>React webpack starter kit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/css/style.css" rel="stylesheet" />
+    <style>
+        #main {
+            margin-top: 10em
+        }
+
+        @media (min-width: 768px) {
+            #main {
+                margin-top: 4em
+            }
+        }
+
+        footer {
+            margin-top: 4em
+        }
+
+        .navbar-right {
+            margin-right:1em
+        }
+
+        /* Hover button */
+        .list-group-hover .list-group-item .hover-btn {
+            display: none;
+        }
+
+        .list-group-hover .list-group-item:hover .hover-btn {
+            display: block;
+            right: 10px;
+            position: absolute;
+        }
+
+        /* Hover list-group-item */
+        .list-group-hover .list-group-item:hover,
+        .list-group-hover .list-group-item:focus {
+            color: #ebebeb;
+            background-color: #485563;
+        }
+
+        /* typeahead input */
+        .typeahead.form-control[readonly] {
+            background-color: inherit;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script src="../lib/app.client.js"></script>
+</body>
+</html>
