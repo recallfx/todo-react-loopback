@@ -30,28 +30,26 @@ const tryLoadingLocalStorage = function (context, data) {
     if (localDataString && localDataString !== '') {
       let localData = JSON.parse(localDataString);
 
+      localData = localData.filter((localTask) => {
+        return localTask && localTask.title;
+      });
+
+      // add them to already received data
+      result = data.concat(localData);
+
       // persist on server if user connected
+      // TODO rewrite this block, because it does not update id from local store
       if (context.user) {
-        let savedTasks = [];
-
         localData.forEach((localTask) => {
-          if (localTask && localTask.title) {
-            // remove temporary id
-            delete localTask.id;
+          // remove temporary id
+          delete localTask.id;
 
-            createRemote(context, localTask, (remoteTask) => {
-              savedTasks.push(remoteTask);
-            });
-          }
+          createRemote(context, localTask, () => {
+          });
         });
 
-        if (savedTasks.length > 0) {
-          // remove local data
-          localStorage.removeItem(Constants.Defaults.TASK_LIST_KEY);
-
-          // add them to already received data
-          result = result.concat(savedTasks);
-        }
+        // remove local data if persist action was a success
+        localStorage.removeItem(Constants.Defaults.TASK_LIST_KEY);
       }
     }
   }
