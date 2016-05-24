@@ -19,7 +19,7 @@
     },
     "title": {
       "type": "string",
-      "required": true
+      "required": false
     },
     "order": {
       "type": "string",

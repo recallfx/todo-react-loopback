@@ -1,18 +1,23 @@
 import React from 'react';
-import config from '../Config';
 import NewTask from './NewTask';
 import Task from './Task';
 import { Link } from 'react-router';
-import * as TaskListActions from '../actions/TaskListActions';
+import { fetchTaskList as fetchTaskListAction } from '../actions/TaskListActions';
 
 export default class TaskList extends React.Component {
+  static contextTypes = {
+    isBrowser: React.PropTypes.bool,
+    hasLocalStorage: React.PropTypes.bool,
+    user: React.PropTypes.object
+  };
+
   static propTypes = {
     data: React.PropTypes.array.isRequired,
-    location: React.PropTypes.object
+    filter: React.PropTypes.string
   };
 
   fetchTaskList() {
-    TaskListActions.fetchTaskList();
+    fetchTaskListAction(this.context);
   }
 
   getAll() {
@@ -39,7 +44,7 @@ export default class TaskList extends React.Component {
   }
 
   render() {
-    const filter = this.props.location ? this.props.location.query.filter : '';
+    const filter = this.props.filter ? this.props.filter : '';
     const tasks = this.getFiltered(filter).map((task) => {
       return (
         <Task id={task.id}
@@ -57,9 +62,9 @@ export default class TaskList extends React.Component {
     let loginLogout = null;
     let buttonFetch = null;
 
-    if (config.user) {
+    if (this.context.user) {
       loginLogout = (
-        <a href='/auth/logout'>Logout ({config.user.displayName})</a>
+        <a href='/auth/logout'>Logout ({this.context.user.displayName})</a>
       );
 
       buttonFetch = (

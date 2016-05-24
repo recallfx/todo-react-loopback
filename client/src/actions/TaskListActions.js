@@ -1,7 +1,7 @@
-import config from '../Config';
 import dispatcher from '../Dispatcher';
 import Constants from '../Constants';
 import axios from 'axios';
+import { debounce } from 'lodash';
 
 /*
  * Private functions
@@ -31,14 +31,15 @@ const _persistRemote = function (axiosConfig, cb) {
 /**
  Delete task from server if mode is not browser and user is logged in
 
+ @param {object} context
  @param {string} id Task ID on server DB
  @param {Function} [cb] Callback function to call after successful request
  */
-const _deleteRemote = function (id, cb) {
-  if (config.isBrowser && config.user && id) {
+const _deleteRemote = function (context, id, cb) {
+  if (context.isBrowser && context.user && id) {
     _persistRemote({
       method: 'delete',
-      url: '/api/users/' + config.user.id + '/tasks/' + id
+      url: '/api/users/' + context.user.id + '/tasks/' + id
     }, cb);
   } else {
     if (cb) cb();
@@ -48,16 +49,17 @@ const _deleteRemote = function (id, cb) {
 /**
  Update task to the server DB if mode is not browser and user is logged in
 
+ @param {object} context
  @param {string} id
  @param {object} data Task data to send to server (upsert)
  @param {Function} [cb(task)] Callback function to call after successful request
  */
-const _updateRemote = function (id, data, cb) {
+const _updateRemote = function (context, id, data, cb) {
   // send single task to server
-  if (config.isBrowser && config.user && data && id) {
+  if (context.isBrowser && context.user && data && id) {
     _persistRemote({
       method: 'put',
-      url: '/api/users/' + config.user.id + '/tasks/' + id,
+      url: '/api/users/' + context.user.id + '/tasks/' + id,
       data: data
     }, cb);
   } else {
@@ -65,21 +67,24 @@ const _updateRemote = function (id, data, cb) {
   }
 };
 
+const _debouncedUpdateRemote = debounce(_updateRemote, 200);
+
 /*
  * Exported functions
  * */
 /**
  Insert new task to the server DB if mode is not browser and user is logged in
 
+ @param {object} context
  @param {object} data Task data to send to server (upsert)
  @param {Function} [cb(task)] Callback function to call after successful request
  */
-export function createRemote(data, cb) {
+export function createRemote(context, data, cb) {
   // send single task to server
-  if (config.isBrowser && config.user && data) {
+  if (context.isBrowser && context.user && data) {
     _persistRemote({
       method: 'post',
-      url: '/api/users/' + config.user.id + '/tasks',
+      url: '/api/users/' + context.user.id + '/tasks',
       data: data
     }, cb);
   } else {
@@ -87,11 +92,11 @@ export function createRemote(data, cb) {
   }
 }
 
-export function fetchTaskList() {
-  if (config.user) {
+export function fetchTaskList(context) {
+  if (context.user) {
     dispatcher.dispatch({ type: Constants.Actions.Ajax.FETCH_START });
 
-    axios.get('/api/users/' + config.user.id + '/tasks')
+    axios.get('/api/users/' + context.user.id + '/tasks')
       .then((response) => {
         dispatcher.dispatch({ type: Constants.Actions.Ajax.FETCH_END, data: response.data, response: response });
       })
@@ -104,7 +109,7 @@ export function fetchTaskList() {
 /*
  * Local methods
  * */
-export function createTask(text, cb) {
+export function createTask(context, text, cb) {
   const tmpId = Date.now() + text;
   const taskNew = {
     title: text,
@@ -113,25 +118,29 @@ export function createTask(text, cb) {
   };
 
   // if user not logged in, create temporary id
-  if (config.isBrowser && !config.user) {
+  if (context.isBrowser && !context.user) {
     taskNew.id = tmpId;
   }
 
-  createRemote(taskNew, (task) => {
+  createRemote(context, taskNew, (task) => {
     if (cb) cb();
 
+    // create only if server request was success
     dispatcher.dispatch({ type: Constants.Actions.TaskListStore.CREATE, task: task });
   });
 }
 
-export function updateTask(id, task) {
-  _updateRemote(id, task, () => {
-    dispatcher.dispatch({ type: Constants.Actions.TaskListStore.UPDATE, id: id, task: task });
-  });
+export function updateTask(context, id, task) {
+  // debounce remote request
+  _debouncedUpdateRemote(context, id, task);
+
+  // immediately dispatch task change to update input value
+  dispatcher.dispatch({ type: Constants.Actions.TaskListStore.UPDATE, id: id, task: task });
 }
 
-export function deleteTask(id) {
-  _deleteRemote(id, () => {
+export function deleteTask(context, id) {
+  _deleteRemote(context, id, () => {
+    // delete only if server request was success
     dispatcher.dispatch({ type: Constants.Actions.TaskListStore.DELETE, id: id });
   });
 }

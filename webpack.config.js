@@ -3,7 +3,6 @@ var fs = require('fs');
 var env = process.env.WEBPACK_ENV;
 var path = require('path');
 
-var fileSuffix = env === 'build' ? '.min.js' : '.js';
 var appName = 'app';
 
 console.log(env);
@@ -22,7 +21,7 @@ var clientConfig = {
   devtool: 'source-map',
   output: {
     path: __dirname + '/client/lib',
-    filename: appName + '.client' + fileSuffix,
+    filename: appName + '.client.js',
     publicPath: __dirname + '/client/www'
   },
   module: {
@@ -56,7 +55,7 @@ var serverConfig = {
   devtool: 'source-map',
   output: {
     path: __dirname + '/client/lib',
-    filename: appName + '.server' + fileSuffix,
+    filename: appName + '.server.js',
     libraryTarget: 'commonjs2',
     publicPath: __dirname + '/client/www'
   },
@@ -90,7 +89,7 @@ var serverConfig = {
   plugins: []
 };
 
-if (env === 'build') {
+if (env === 'prod') {
   clientConfig.plugins = [
     new webpack.DefinePlugin({ "process.env": { NODE_ENV: JSON.stringify("production") }}),
     new webpack.optimize.DedupePlugin(),

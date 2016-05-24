@@ -1,21 +1,17 @@
-var React = require('react');
-var ReactDOMServer = require('react-dom/server');
-
-import config from '../Config';
+import React from 'react';
+import ReactDOMServer from 'react-dom/server';
 import Layout from './../componets/Layout';
 import PageTodo from './../pages/Todo';
 
-export function renderApp(serverContext) {
-  if (serverContext) {
-    config.user = serverContext.user ? serverContext.user : null;
-    config.data = serverContext.data ? serverContext.data : [];
-  } else {
-    throw new Error('Parameter serverContext in server mode was not set.');
-  }
+/**
+ Server rendering function
 
+ @param {object} serverContext Pass server context, that otherwise would be window.serverContext
+ */
+export default function renderApp(serverContext) {
   return ReactDOMServer.renderToString(
     <Layout>
-      <PageTodo />
+      <PageTodo serverContext={serverContext} />
     </Layout>
   );
 }

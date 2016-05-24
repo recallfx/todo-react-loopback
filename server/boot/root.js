@@ -1,5 +1,5 @@
 module.exports = function(server) {
-  var appServer = require('../../client/lib/app.server.min');
+  var renderApp = require('../../client/lib/app.server').default;
   var Task = server.models.task;
 
   // Install a `/` route that returns server status
@@ -44,7 +44,7 @@ module.exports = function(server) {
 
   function renderPage(res, serverContext) {
     // render app with data
-    var appHtml = appServer.renderApp(serverContext);
+    var appHtml = renderApp(serverContext);
 
     // render page
     res.render('pages/index', {

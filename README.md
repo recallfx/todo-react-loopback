@@ -5,7 +5,7 @@ Example Todo list application based on React and LoopBack
 ## Global dependencies
 
 ```
-$ npm install -g strongloop webpack
+$ npm install -g strongloop webpack pm2
 ```
 
 ## Setup dependencies
@@ -17,7 +17,7 @@ $ npm install
 ### Build sources
 
 ```
-$ WEBPACK_ENV=build webpack
+$ WEBPACK_ENV=production webpack
 ```
 
 ### Setup providers.json

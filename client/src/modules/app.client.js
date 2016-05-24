@@ -1,9 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Layout from './../componets/Layout';
-import PageAbout from './../pages/About';
-import PageTodo from './../pages/Todo';
 import { Router, Route, IndexRoute, useRouterHistory } from 'react-router';
+
+import Layout from '../componets/Layout';
+import PageAbout from '../pages/About';
+import PageTodo from '../pages/Todo';
 import { createHashHistory } from 'history';
 
 window.onload = () => {

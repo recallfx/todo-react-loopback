@@ -1,7 +1,13 @@
 import React from 'react';
-import * as TaskListActions from '../actions/TaskListActions';
+import { updateTask, deleteTask } from '../actions/TaskListActions';
 
 export default class Task extends React.Component {
+  static contextTypes = {
+    isBrowser: React.PropTypes.bool,
+    hasLocalStorage: React.PropTypes.bool,
+    user: React.PropTypes.object
+  };
+
   static propTypes = {
     id: React.PropTypes.string.isRequired,
     title: React.PropTypes.string.isRequired,
@@ -17,15 +23,15 @@ export default class Task extends React.Component {
   };
 
   handleChangeCompleted(e) {
-    TaskListActions.updateTask(this.props.id, {completed: e.target.checked});
+    updateTask(this.context, this.props.id, {completed: e.target.checked});
   }
 
   handleChangeTitle(e) {
-    TaskListActions.updateTask(this.props.id, {title: e.target.value});
+    updateTask(this.context, this.props.id, {title: e.target.value});
   }
 
-  deleteTask() {
-    TaskListActions.deleteTask(this.props.id);
+  handleDeleteTask() {
+    deleteTask(this.context, this.props.id);
   }
 
   render() {
@@ -50,7 +56,7 @@ export default class Task extends React.Component {
                    onChange={this.handleChangeTitle.bind(this)} />
           </div>
           <div className='hover-btn pull-right'>
-            <button className='item-remove btn btn-default btn-xs' onClick={this.deleteTask.bind(this)}>
+            <button className='item-remove btn btn-default btn-xs' onClick={this.handleDeleteTask.bind(this)}>
               <span className='glyphicon glyphicon-trash'></span>
             </button>
           </div>

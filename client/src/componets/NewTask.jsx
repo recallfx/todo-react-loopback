@@ -1,7 +1,13 @@
 import React from 'react';
-import * as TaskListActions from '../actions/TaskListActions';
+import { createTask } from '../actions/TaskListActions';
 
 export default class NewTask extends React.Component {
+  static contextTypes = {
+    isBrowser: React.PropTypes.bool,
+    hasLocalStorage: React.PropTypes.bool,
+    user: React.PropTypes.object
+  };
+
   constructor() {
     super();
 
@@ -17,12 +23,14 @@ export default class NewTask extends React.Component {
   }
 
   handleKeyPress(e) {
-    if (e.key === 'Enter' && e.target.value.length > 0) {
-      TaskListActions.createTask(e.target.value, () => {
-        this.setState({
-          title: ''
+    if (e.key === 'Enter') {
+      if (e.target.value.length > 0) {
+        createTask(this.context, e.target.value, () => {
+          this.setState({
+            title: ''
+          });
         });
-      });
+      }
     }
   }
 

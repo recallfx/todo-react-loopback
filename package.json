@@ -1,16 +1,14 @@
 {
   "name": "todo-react-loopback",
   "description": "Example JavaScript Todo List application based on React and LoopBack",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
 
-    "dev": "set WEBPACK_ENV=dev && webpack ",
-    "build": "set WEBPACK_ENV=build && webpack",
-
-    "dev_watch": "set WEBPACK_ENV=dev && webpack --watch --inline",
-    "dev_serve": "set WEBPACK_ENV=dev_serve && webpack --watch --inline"
+    "dev": "webpack ",
+    "prod": "set WEBPACK_ENV=prod && webpack",
+    "dev_watch": "webpack --watch --inline"
   },
   "repository": {
     "type": "git",

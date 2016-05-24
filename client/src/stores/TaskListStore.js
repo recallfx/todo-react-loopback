@@ -1,15 +1,15 @@
 import { EventEmitter} from 'events';
 import { find, findIndex, assign } from 'lodash';
-import config from '../Config';
+import Context from '../Context';
 import dispatcher from '../Dispatcher';
 import Constants from '../Constants';
 import { createRemote } from '../actions/TaskListActions';
 
 // private functions
-const trySavingLocalStorage = function (taskList) {
+const trySavingLocalStorage = function (context, taskList) {
   // try saving to local storage only for users who has not logged in
   // and only in browsers with local storage support
-  if (config.isBrowser && config.hasLocalStorage && !config.user) {
+  if (context.isBrowser && context.hasLocalStorage && !context.user) {
     if (taskList) {
       // save to local store
       localStorage.setItem(Constants.Defaults.TASK_LIST_KEY, JSON.stringify(taskList));
@@ -20,34 +20,38 @@ const trySavingLocalStorage = function (taskList) {
   }
 };
 
-const tryLoadingLocalStorage = function (data) {
+const tryLoadingLocalStorage = function (context, data) {
   let result = data ? data : [];
 
-  if (config.isBrowser && config.hasLocalStorage) {
+  if (context.isBrowser && context.hasLocalStorage) {
     const localDataString = localStorage.getItem(Constants.Defaults.TASK_LIST_KEY);
 
     // check if local storage has any saved tasks
     if (localDataString && localDataString !== '') {
       let localData = JSON.parse(localDataString);
 
-      localData = localData.filter((localTask) => {
-        return localTask && localTask.title;
-      });
-
-      // add them to already received data
-      result = data.concat(localData);
-
       // persist on server if user connected
-      if (config.user) {
-        localData.forEach((localTask) => {
-          // remove temporary id
-          delete localTask.id;
+      if (context.user) {
+        let savedTasks = [];
 
-          createRemote(localTask, () => {
-            // remove local data if persist action was a success
-            localStorage.removeItem(Constants.Defaults.TASK_LIST_KEY);
-          });
+        localData.forEach((localTask) => {
+          if (localTask && localTask.title) {
+            // remove temporary id
+            delete localTask.id;
+
+            createRemote(context, localTask, (remoteTask) => {
+              savedTasks.push(remoteTask);
+            });
+          }
         });
+
+        if (savedTasks.length > 0) {
+          // remove local data
+          localStorage.removeItem(Constants.Defaults.TASK_LIST_KEY);
+
+          // add them to already received data
+          result = result.concat(savedTasks);
+        }
       }
     }
   }
@@ -62,63 +66,65 @@ class TaskListStore extends EventEmitter {
   constructor() {
     super();
 
+    this.context = new Context();
+
     this.taskList = null;
   }
 
-  ensureTaskList() {
+  initTaskList(data) {
     // if task list is not initialised, try adding config data and local storage
     if (this.taskList === null) {
-      this.taskList = tryLoadingLocalStorage(config.data);
+      this.taskList = tryLoadingLocalStorage(this.context, data);
     }
   }
 
   create(task) {
-    this.ensureTaskList();
-
     this.taskList.push(task);
 
-    trySavingLocalStorage(this.taskList);
+    trySavingLocalStorage(this.context, this.taskList);
 
-    this.emit('change');
+    if (this.context.isBrowser) {
+      this.emit('change');
+    }
   }
 
   updateById(id, updatedTask) {
-    this.ensureTaskList();
-
     let task = find(this.taskList, (task) => task.id === id);
 
     assign(task, updatedTask);
 
-    trySavingLocalStorage(this.taskList);
+    trySavingLocalStorage(this.context, this.taskList);
 
-    this.emit('change');
+    if (this.context.isBrowser) {
+      this.emit('change');
+    }
   }
 
   deleteById(id) {
-    this.ensureTaskList();
-
     const index = findIndex(this.taskList, (task) => task.id === id);
 
     if (index > -1) {
       this.taskList.splice(index, 1);
 
-      trySavingLocalStorage(this.taskList);
+      trySavingLocalStorage(this.context, this.taskList);
 
-      this.emit('change');
+      if (this.context.isBrowser) {
+        this.emit('change');
+      }
     }
   }
 
   setAll(data) {
     this.taskList = data;
 
-    trySavingLocalStorage(this.taskList);
+    trySavingLocalStorage(this.context, this.taskList);
 
-    this.emit('change');
+    if (this.context.isBrowser) {
+      this.emit('change');
+    }
   }
 
   getAll() {
-    this.ensureTaskList();
-
     return this.taskList.sort((a, b) => b.order.localeCompare(a.order));
   }
 
